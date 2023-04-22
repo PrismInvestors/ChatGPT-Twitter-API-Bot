@@ -1,6 +1,6 @@
 # Python Twitter Script
 
-This project contains a Python script to interact with the Twitter API.
+This project contains a Python script to interact with the Twitter API and ChatGPT
 
 ## Installation
 
