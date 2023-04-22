@@ -115,7 +115,7 @@ try:
             except tweepy.Forbidden as e:
                 print("Cannot heart and quote tweet the same tweet twice. Blacklisting the tweet.")
         else:
-            print("Tweet is either not related to crypto/finance or is an airdrop/giveaway. Skipping.")
+            print("Tweet does not meet the requirements. Skipping.")
     else:
         print("No tweets found within the last 12 hours")
 
