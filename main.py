@@ -56,68 +56,61 @@ try:
         return tweets
 
     replied_tweets = load_tweets("replied_tweets.txt")
+    tweet_sent = False 
+    while not tweet_sent:
+        highest_retweet_count = 0
+        target_tweet = None
+        target_username = None
 
-    highest_retweet_count = 0
-    target_tweet = None
-    target_username = None
+        # Get the latest 200 tweets from the home timeline
+        tweets = api.home_timeline(count=200)
 
+        for tweet in tweets:
+            username = tweet.user.screen_name
+            tweet_age = (datetime.now(timezone.utc) - tweet.created_at).total_seconds()
+            # Check if the tweet was posted within the last hour (3600 seconds) and the tweet author is not your account
+            if tweet_age <= 6400 and tweet.retweet_count > highest_retweet_count and tweet.id not in replied_tweets and tweet.text.strip() != "" and username != {twitter_name}:
+                highest_retweet_count = tweet.retweet_count
+                target_tweet = tweet
+                target_username = username
 
-    # Get the latest 200 tweets from the home timeline
-    tweets = api.home_timeline(count=200)
-
-    # Get the list of screen names of users that you are following
-    following = [user.screen_name for user in api.get_friends()]
-
-    # Filter out the tweets that are not from the users you are following
-    filtered_tweets = []
-    for tweet in tweets:
-        if tweet.user.screen_name in following:
-            filtered_tweets.append(tweet)
-
-    for tweet in tweets:
-        username = tweet.user.screen_name
-        tweet_age = (datetime.now(timezone.utc) - tweet.created_at).total_seconds()
-        # Check if the tweet was posted within the last hour (3600 seconds) and the tweet author is not your account
-        if tweet_age <= 6400 and tweet.retweet_count > highest_retweet_count and tweet.id not in replied_tweets and tweet.text.strip() != "" and username != {twitter_name}:
-            highest_retweet_count = tweet.retweet_count
-            target_tweet = tweet
-            target_username = username
-
-    def get_valid_response(prompt):
-        while True:
-            response = generate_response(prompt)
-            if "t.co" not in response:  # Change this line to check if "t.co" is present anywhere in the response
-                return response
-    def meets_requirement(tweet_text):
-        if not filter_tweets:
-            return True
-        prompt = f"OUTPUT: Reply only YES or NO\nPROMPT: {requirement}?\n\nTweet: {tweet_text}"
-        response = generate_response(prompt).strip().lower()
-        while "yes" not in response and "no" not in response:
+        def get_valid_response(prompt):
+            while True:
+                response = generate_response(prompt)
+                if "t.co" not in response:  # Change this line to check if "t.co" is present anywhere in the response
+                    return response
+        def meets_requirement(tweet_text):
+            if not filter_tweets:
+                return True
+            prompt = f"OUTPUT: Reply only YES or NO\nPROMPT: {requirement}?\n\nTweet: {tweet_text}"
             response = generate_response(prompt).strip().lower()
-        return "yes" in response
-    if target_tweet:
-        # Add the tweet ID to the replied list and save to file
-        replied_tweets.add(target_tweet.id)
-        save_tweets(replied_tweets, "replied_tweets.txt")
-        if meets_requirement(target_tweet.text):
-            prompt2 = f"Based on the tweet below, {prompt} Output should include nothing but the tweet. Do not include any other text or characters, only output the intended tweet: \n\nTWEET:\n{target_tweet.text}"
-            response = get_valid_response(prompt2)
-            if ':' in response:
-                response = response.split(':', 1)[1].lstrip()
-            try:
-                # Like the original tweet
-                api.create_favorite(target_tweet.id)
-                print("Posting quote tweet...")  # Add this line
-                original_tweet_url = f"https://twitter.com/{target_username}/status/{target_tweet.id}"
-                quote_tweet_text = f"{response} {original_tweet_url}"
-                quote_tweet = api.update_status(status=quote_tweet_text, attachment_url=original_tweet_url)
-            except tweepy.Forbidden as e:
-                print("Cannot heart and quote tweet the same tweet twice. Blacklisting the tweet.")
+            while "yes" not in response and "no" not in response:
+                response = generate_response(prompt).strip().lower()
+            return "yes" in response
+        if target_tweet:
+            # Add the tweet ID to the replied list and save to file
+            replied_tweets.add(target_tweet.id)
+            save_tweets(replied_tweets, "replied_tweets.txt")
+            if meets_requirement(target_tweet.text):
+                prompt2 = f"Based on the tweet below, {prompt} Output should include nothing but the tweet. Do not include any other text or characters, only output the intended tweet: \n\nTWEET:\n{target_tweet.text}"
+                response = get_valid_response(prompt2)
+                if ':' in response:
+                    response = response.split(':', 1)[1].lstrip()
+                try:
+                    # Like the original tweet
+                    api.create_favorite(target_tweet.id)
+                    print("Posting quote tweet...")  # Add this line
+                    original_tweet_url = f"https://twitter.com/{target_username}/status/{target_tweet.id}"
+                    quote_tweet_text = f"{response} {original_tweet_url}"
+                    quote_tweet = api.update_status(status=quote_tweet_text, attachment_url=original_tweet_url)
+                    tweet_sent = True  # Set tweet_sent to True when a tweet is quote tweeted and favorited successfully
+                    break  # Break out of the loop when a tweet is quote tweeted and favorited successfully
+                except tweepy.Forbidden as e:
+                    print("Cannot heart and quote tweet the same tweet twice. Blacklisting the tweet and trying again.")
+            else:
+                print("Tweet does not meet the requirements. Skipping tweet and trying again.")
         else:
-            print("Tweet does not meet the requirements. Skipping.")
-    else:
-        print("No tweets found within the last 12 hours")
+            print("No tweets found within the last 12 hours")
 
 except ConnectionError as e:
     print(f"Connection error: {e}. Reconnecting...")
