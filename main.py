@@ -13,13 +13,14 @@ twitter_name = config.twitter_name
 filter_tweets = config.filter_tweets
 requirement = config.requirement
 prompt = config.prompt
+openai_api_key=config.openai_api_key
 # Authenticate with Twitter
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_token_secret)
 api = tweepy.API(auth)
 
 # ChatGPT API key
-openai.api_key = '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'
+openai.api_key = {openai_api_key}
 
 def generate_response(prompt):
     response = openai.ChatCompletion.create(
