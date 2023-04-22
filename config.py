@@ -2,8 +2,8 @@
 
 consumer_key = "Consumer Key"
 consumer_secret = "Consumer Secret"
-access_token = "1396103560333455362-bB031hqkDT0EaPP3nFWpYJyUnPL6bX"
-access_token_secret = "vUKPBdrMb93kxGWKGrMFJKM6SsAfQJYUFUDwBnjoyW3Ec"
+access_token = "Access Token"
+access_token_secret = "Access Token"
 twitter_name = "TwitterHandle  (no @)"
 
 # ChatGPT API key
