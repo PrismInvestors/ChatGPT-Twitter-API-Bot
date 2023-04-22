@@ -20,7 +20,7 @@ auth.set_access_token(access_token, access_token_secret)
 api = tweepy.API(auth)
 
 # ChatGPT API key
-openai.api_key = {openai_api_key}
+openai.api_key = f"{openai_api_key}"
 
 def generate_response(prompt):
     response = openai.ChatCompletion.create(
